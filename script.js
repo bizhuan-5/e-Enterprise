@@ -225,91 +225,104 @@ function onChange() {
 
 
 /**
- * 新增書籍
+ * 新增書籍（依規格）
  */
-function addBook() { 
+function addBook() {
 
-    //TODO：請完成新增書籍的相關功能
-    var grid=$("#book_grid").data("kendoGrid");
-    var book = {
-        "BookId": 0,
-        "BookName": $("#book_name_d").val(),
-        "BookClassId": $("#book_class_d").data("kendoDropDownList").value(),
-        "BookClassName": "",
-        "BookBoughtDate": kendo.toString($("#book_bought_date_d").data("kendoDatePicker").value(),"yyyy-MM-dd"),
-        "BookStatusId": "A",
-        "BookStatusName": bookStatusData.find(m=>m.StatusId==defauleBookStatusId).StatusText,
-        "BookKeeperId": "",
-        "BookKeeperCname": "",
-        "BookKeeperEname": "",
-        "BookAuthor": "",
-        "BookPublisher": "",
-        "BookNote": ""
+    // 必填欄位檢查
+    var validator = $("#book_detail_area").kendoValidator().data("kendoValidator");
+    if (!validator.validate()) {
+        return;
     }
 
-    //關閉 Window
-    $("#book_detail_area").data("kendoWindow").close();
- }
-
- /**
-  * 更新書籍
-  * @param {} bookId 
-  */
-function updateBook(bookId) {
-
-    var book = bookDataFromLocalStorage.find(m => m.BookId == bookId);
-
-    // 📘 圖書基本資料
-    book.BookName = $("#book_name_d").val();
+    // 產生 BookId(從book-data。js來看，第一本書的id是0 所以要給一本書新的編號，要先計算book data的編號已經到哪一個了)
+    var newBookId = bookDataFromLocalStorage.length > 0
+        ? Math.max(...bookDataFromLocalStorage.map(b => b.BookId)) + 1
+        : 1;
 
     var classDDL = $("#book_class_d").data("kendoDropDownList");
-    book.BookClassId = classDDL.value();
-    book.BookClassName = classDDL.text();
 
-    book.BookBoughtDate = $("#book_bought_date_d").val();
+    var book = {
+        BookId: newBookId,
 
-    book.BookAuthor = $("#book_author_d").val();
-    book.BookPublisher = $("#book_publisher_d").val();
-    book.BookNote = $("#book_note_d").val();
+        // 畫面輸入值
+        BookClassId: classDDL.value(),
+        BookClassName: classDDL.text(),
 
-    // 📘 借閱狀態
-    var statusDDL = $("#book_status_d").data("kendoDropDownList");
-    book.BookStatusId = statusDDL.value();
-    book.BookStatusName = statusDDL.text();
+        BookName: $("#book_name_d").val(),
 
-    // 📘 借閱人
-    var bookKeeperId = $("#book_keeper_d")
-        .data("kendoDropDownList").value();
+        BookBoughtDate: kendo.toString(
+            $("#book_bought_date_d")
+                .data("kendoDatePicker").value(),
+            "yyyy/MM/dd"
+        ),
 
+        BookAuthor: $("#book_author_d").val(),
+        BookPublisher: $("#book_publisher_d").val(),
+        BookNote: $("#book_note_d").val(),
+
+        // 規格指定預設值（預設可借出）
+        BookStatusId: "A",
+        BookStatusName: "可借出",
+        BookKeeperId: "",
+        BookKeeperCname: "",
+        BookKeeperEname: ""
+    };
+
+    // 新增至 LocalStorage
+    bookDataFromLocalStorage.push(book);
+    localStorage.setItem("bookData", JSON.stringify(bookDataFromLocalStorage));
+
+    // 更新 Grid
+    $("#book_grid").data("kendoGrid").dataSource.add(book);
+
+    // 關閉視窗
+    $("#book_detail_area").data("kendoWindow").close();
+
+    // 清空表單
+    clear();
+}
+
+
+/**
+ * 
+ * 更新書籍
+ * @param {} bookId  
+ */
+function updateBook(bookId) {
+    //TODO：請完成更新書籍的相關功能
+    var book = bookDataFromLocalStorage.find(m => m.BookId == bookId)
+
+    book.BookName = $("#book_name_d").val();
+    book.BookClassId = $("#book_class_d").val();
+    book.BookClassName = "";
+    book.BookBoughtDate = ""
+    book.BookStatusId = ""
+    book.BookStatusName = ""
+
+    var bookKeeperId = $("#book_keeper_d").data("kendoDropDownList").value();
     var bookKeeperCname =
-        bookKeeperId === ""
-            ? ""
-            : memberData.find(m => m.UserId == bookKeeperId).UserCname;
-
-    var bookKeeperEname =
-        bookKeeperId === ""
-            ? ""
-            : memberData.find(m => m.UserId == bookKeeperId).UserEname;
+        bookKeeperId == "" ? "" : memberData.find(m => m.UserId == bookKeeperId).UserCname;
 
     book.BookKeeperId = bookKeeperId;
     book.BookKeeperCname = bookKeeperCname;
-    book.BookKeeperEname = bookKeeperEname;
+    book.BookKeeperEname = "";
+    book.BookAuthor = "";
+    book.BookPublisher = "";
+    book.BookNote = "";
 
-    // 📊 更新 Grid
     var grid = $("#book_grid").data("kendoGrid");
     grid.dataSource.pushUpdate(book);
 
-    // 📜 借閱紀錄
-    if (book.BookStatusId === "B" || book.BookStatusId === "C") {
+    if (bookStatusId == "B" || bookStatusId == "C") {
         addBookLendRecord();
     }
 
-    // ❌ 關閉視窗
     $("#book_detail_area").data("kendoWindow").close();
 
-    // 🧹 清空表單
     clear();
 }
+
 
 
  /**新增借閱紀錄 */
