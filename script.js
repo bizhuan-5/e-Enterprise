@@ -425,8 +425,11 @@ function showBookLendRecord(e) {
  */
 function clear(area) {
     //TODO : 請補齊未完成的功能
+    //根據每個抓取資料的地方設置空值，一旦按下“清除”，就會清空
     $("#book_name_q").val("");
-
+    $("#book_class_q").data("kendoDropDownList").value("");
+    $("#book_keeper_q").data("kendoDropDownList").value("");
+    $("#book_status_q").data("kendoDropDownList").value("");
 }
 
 /**
