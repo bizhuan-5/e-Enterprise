@@ -1,38 +1,10 @@
-﻿using Microsoft.Data.SqlClient;
-using System.Data;
-using Dapper;
-using Microsoft.Extensions.Configuration; // 必須引用此項才能使用 ConfigurationBuilder
-using System.IO; // 必須引用此項才能使用 Directory
-using System.Collections.Generic; // 確保 List<Code> 可使用
-using System.Linq; // 確保 .ToList() 可使用
+﻿using Dapper;
+using Microsoft.Data.SqlClient;
 
 namespace BookSystem.Model
 {
-    
     public class CodeService
     {
-        public List<Code>GetBookStatusData()
-        {
-            var result = new List<Code>();
-            result.Add(new Code() { Value = "A", Text = "可以借出" });
-            result.Add(new Code() { Value = "B", Text = "已借出" });
-            result.Add(new Code() { Value = "U", Text = "不可借出" });
-            result.Add(new Code() { Value = "C", Text = "已借出(未領)" });
-
-            return result;
-        }
-
-        public List<Code> GetColorData()
-        {
-            var result = new List<Code>();
-            result.Add(new Code() { Value = "Red", Text = "Red" });
-            result.Add(new Code() { Value = "Blue", Text = "Blue" });
-            result.Add(new Code() { Value = "Green", Text = "Green" });
-            result.Add(new Code() { Value = "Purple", Text = "Purple" });
-
-            return result;
-        }
-
         private string GetDBConnectionString()
         {
             var config = new ConfigurationBuilder()
@@ -42,22 +14,40 @@ namespace BookSystem.Model
 
             return config.GetConnectionString("DBConn");
         }
+        public List<Code> GetBookStatusData()
+        {
+            var result = new List<Code>();
+            using (SqlConnection conn = new SqlConnection(GetDBConnectionString()))
+            {
+                string sql = "Select CODE_ID As Value,CODE_NAME As Text From BOOK_CODE Where CODE_TYPE=@CODE_TYPE";
+                Dictionary<string, Object> parameter = new Dictionary<string, object>();
+                parameter.Add("@CODE_TYPE", "BOOK_STATUS");
+                result = conn.Query<Code>(sql, parameter).ToList();
+            }
+            return result;
+        }
 
         /// <summary>
         /// 使用 SqlConnection 取得圖書類別
         /// </summary>
         public List<Code> GetBookClassData()
         {
-            using (SqlConnection db = new SqlConnection(GetDBConnectionString()))
+            var result = new List<Code>();
+            using (SqlConnection conn = new SqlConnection(GetDBConnectionString()))
             {
-                // 使用 AS 將資料庫欄位對應到 Code 模型的 Value 與 Text 屬性
+                // 定義 SQL 指令，使用 AS 對應到模型屬性
                 string sql = @"SELECT BOOK_CLASS_ID AS Value, 
-                                      BOOK_CLASS_NAME AS Text 
-                               FROM BOOK_CLASS 
-                               ORDER BY BOOK_CLASS_ID";
+                              BOOK_CLASS_NAME AS Text 
+                       FROM BOOK_CLASS 
+                       ORDER BY BOOK_CLASS_ID";
 
-                return db.Query<Code>(sql).ToList();
+                // 建立參數字典 (目前無特定篩選條件，可留空或為日後擴充準備)
+                Dictionary<string, object> parameter = new Dictionary<string, object>();
+
+                // 執行 Dapper 查詢並轉為 List
+                result = conn.Query<Code>(sql, parameter).ToList();
             }
+            return result;
         }
 
         /// <summary>
@@ -65,16 +55,22 @@ namespace BookSystem.Model
         /// </summary>
         public List<Code> GetUserData()
         {
-            using (SqlConnection db = new SqlConnection(GetDBConnectionString()))
+            var result = new List<Code>();
+            using (SqlConnection conn = new SqlConnection(GetDBConnectionString()))
             {
-                // 將中文姓名與英文姓名組合顯示，方便使用者辨識
+                // 定義 SQL 指令
                 string sql = @"SELECT USER_ID AS Value, 
-                                      USER_CNAME AS Text 
-                               FROM MEMBER_M 
-                               ORDER BY USER_ID";
+                              USER_CNAME AS Text 
+                       FROM MEMBER_M 
+                       ORDER BY USER_ID";
 
-                return db.Query<Code>(sql).ToList();
+                // 建立參數字典
+                Dictionary<string, object> parameter = new Dictionary<string, object>();
+
+                // 執行 Dapper 查詢
+                result = conn.Query<Code>(sql, parameter).ToList();
             }
+            return result;
         }
     }
 }
