@@ -1,28 +1,37 @@
 ﻿using BookSystem.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Dapper;
+using System.Reflection;
 
 namespace BookSystem.Controllers
 {
+
     [Route("api/code")]
     [ApiController]
     public class CodeController : ControllerBase
     {
+
         [Route("bookstatus")]
-        [HttpPost]
+        [HttpPost()]
         public IActionResult GetBookStatusData()
         {
-            CodeService codeService = new CodeService();
-
-            var result=new ApiResult<List<Code>>
+            try
             {
-                Status=true,
-                Message=string.Empty,
-                Data=codeService.GetBookStatusData()
-            };
+                CodeService codeService = new CodeService();
+                ApiResult<List<Code>> result = new ApiResult<List<Code>>()
+                {
+                    Data = codeService.GetBookStatusData(),
+                    Status = true,
+                    Message = string.Empty
+                };
 
-            return new JsonResult(result);
+                return Ok(result);
+            }
+            catch (Exception)
+            {
+
+                return Problem();
+            }
         }
 
         // 圖書類別 (對應前端 api/code/bookclass)
@@ -35,7 +44,7 @@ namespace BookSystem.Controllers
             {
                 Status = true,
                 Message = string.Empty,
-                Data = codeService.GetBookClassData() 
+                Data = codeService.GetBookClassData()
             };
             return new JsonResult(result);
         }
@@ -50,9 +59,10 @@ namespace BookSystem.Controllers
             {
                 Status = true,
                 Message = string.Empty,
-                Data = codeService.GetUserData() 
+                Data = codeService.GetUserData()
             };
             return new JsonResult(result);
         }
+
     }
 }
